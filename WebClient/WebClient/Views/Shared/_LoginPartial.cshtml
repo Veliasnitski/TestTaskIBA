@@ -1,0 +1,30 @@
+@{
+    var claimsIdentity = User.Identity as System.Security.Claims.ClaimsIdentity;
+    List<System.Security.Claims.Claim> c = claimsIdentity.Claims.ToList();
+
+    @if (c.Count > 0)
+    {
+        <ul class="nav navbar-nav navbar-right">
+            <li>
+                <a asp-area="" asp-controller="Projects" asp-action="MyProjects">My projects</a>
+            </li>
+            <li>
+                <a asp-area="" asp-controller="Tasks" asp-action="MyTasks">My tasks(to do)</a>
+            </li>
+            <li>
+                <a asp-area="" asp-controller="Account" asp-action="Logout">Logout (@c[0].Value)</a>
+            </li>
+        </ul>
+    }
+    else
+    {
+        <ul class="nav navbar-nav navbar-right">
+            <li>
+                <a asp-area="" asp-controller="Account" asp-action="Register">Register</a>
+            </li>
+            <li>
+                <a asp-area="Identity" asp-controller="Account" asp-action="Login">Login</a>
+            </li>
+        </ul>
+    }
+}

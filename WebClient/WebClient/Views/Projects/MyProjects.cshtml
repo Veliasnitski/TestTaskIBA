@@ -1,0 +1,178 @@
+﻿@using WebClient.Models;
+@model WebClient.Models.Project;
+@{
+    var listProjects = ViewData["MyProjects"] as IEnumerable<ExtendedProject>;
+    string idUser = ViewData["IdUser"] as string;
+    ViewData["Title"] = "MyProjects";
+}
+
+<h2>My projects</h2>
+
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#projectModal">
+    Create new project
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="projectModal" tabindex="-1" role="dialog" aria-labelledby="projectModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="projectModalLabel">Project</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h4 class="text-danger">Please fill in all fields!</h4>
+                <form asp-action="AddProject" asp-controller="Projects" asp-anti-forgery="true" enctype="multipart/form-data">
+                    <div class="validation" asp-validation-summary="ModelOnly"></div>
+                    <div>
+                        <div>
+                            <label asp-for="Name">Name</label><br />
+                            <input type="text" asp-for="Name" class="btn-block" />
+                            <span asp-validation-for="Name" />
+                        </div>
+                        <div>
+                            <label asp-for="Description">Description</label><br />
+                            <textarea asp-for="Description" class="form-control"></textarea>
+                        </div>
+                        <div class="btn-block">
+                            <label asp-for="Name">Status</label><br />
+                            @Html.DropDownList("Status", Html.GetEnumSelectList(typeof(Status)))
+                        </div>
+                        <hr />
+                        <div>
+                            <button type="submit" class="btn btn-primary btn-block">Create</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<br/>
+<br/>
+<input class="form-control" type="text" placeholder="Search" id="search-text" onkeyup="tableSearch()">
+
+@if (listProjects != null)
+{
+    <table class="table" id="myProjects">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="Mytable">
+            @foreach (var item in listProjects)
+            {
+                <tr>
+                    <td>
+                        @if (item.Project.Status == (int)Status.Active)
+                        {
+                            @Html.ActionLink(@item.Project.Name, "Project", "Projects", new { id = @item.Project.IdProject }, null)
+                        }
+                        else
+                        {
+                            @item.Project.Name
+                        }
+
+                    </td>
+                    <td>
+                        @{string role = (idUser == item.AdminId.ToString())
+                              ? Role.Administrator.ToString()
+                              : Role.Developer.ToString();}
+                        @role
+                    </td>
+                    <td>
+                        @{string status = ((Status)(@item.Project.Status ?? 0)).ToString();}
+                        @status
+                    </td>
+                    <td>
+                        @{ if (idUser == item.AdminId.ToString())
+                            {
+                                <button type="button" class="btn btn-link" data-toggle="modal" data-target="#projectModal_@item.Project.IdProject">
+                                    Settings
+                                </button>
+
+                                <!-- Modal -->
+                                <div class="modal fade" id="projectModal_@item.Project.IdProject" tabindex="-1" role="dialog" aria-labelledby="projectModalLabel_@item.Project.IdProject" aria-hidden="true">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h4 class="modal-title" id="projectModalLabel_@item.Project.IdProject">Project</h4>
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <h4 class="text-danger">Please fill in all fields!</h4>
+                                                <form asp-action="UpdateProject" asp-controller="Projects" asp-anti-forgery="true" enctype="multipart/form-data">
+                                                    <div class="validation" asp-validation-summary="ModelOnly"></div>
+                                                    <div>
+                                                        <div>
+                                                            <label asp-for="Name">Name</label><br />
+                                                            <input type="text" asp-for="Name" value="@item.Project.Name" class="btn-block" />
+                                                            <span asp-validation-for="Name" />
+                                                        </div>
+                                                        <div>
+                                                            <label asp-for="Description">Description</label><br />
+                                                            <textarea class="form-control" name="Description">@item.Project.Description</textarea>
+                                                        </div>
+                                                        <div class="btn-block">
+                                                            <label asp-for="Name">Status</label><br />
+                                                            @Html.DropDownList("Status", Html.GetEnumSelectList(typeof(Status)))
+                                                        </div>
+                                                        <div>
+                                                            <input type="hidden" asp-for="IdProject" value="@item.Project.IdProject" />
+                                                        </div>
+                                                        <hr />
+                                                        <div>
+                                                            <button type="submit" class="btn btn-primary btn-block">Accept</button>
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </td>
+                    <td align="right">
+                        @{ if (idUser == item.AdminId.ToString())
+                            {
+                                <form asp-action="DeleteProject" asp-controller="Projects" method="post">
+                                    <input type="hidden" value="@item.Project.IdProject" name="idProject" />
+                                    <input type="submit" class="btn btn-danger" value="Delete" />
+                                </form>
+                            }}
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+}
+<script>
+    function tableSearch() {
+    var phrase = document.getElementById('search-text');
+    var table = document.getElementById('myProjects');
+    var regPhrase = new RegExp(phrase.value, 'i');
+    var flag = false;
+    for (var i = 1; i < table.rows.length; i++) {
+        flag = false;
+        for (var j = table.rows[i].cells.length - 1; j >= 0; j--) {
+            flag = regPhrase.test(table.rows[i].cells[j].innerHTML);
+            if (flag) break;
+        }
+        if (flag) {
+            table.rows[i].style.display = "";
+        } else {
+            table.rows[i].style.display = "none";
+        }
+    }
+}
+</script>

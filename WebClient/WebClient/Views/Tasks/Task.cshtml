@@ -1,0 +1,123 @@
+﻿@model WebClient.Models.Comment
+@{
+    var task = ViewData["Task"] as MyTask;
+    var users = ViewData["Users"] as List<ExtendedUser>;
+    var usersChoice = ViewData["PossibleUsers"] as List<ExtendedUser>;
+    var project = ViewData["Project"] as Project;
+    var comments = ViewData["Comments"] as List<ExtendedComment>;
+    Role myRole = (Role)(ViewData["MyRole"] ?? Role.Developer);
+    var status = ((Status)(task.Status ?? 0)).ToString();
+    var priority = ((Priority)(task.Priority ?? 0)).ToString();
+    string statusTaskButton = (task.Status == (int)Status.Active) ? "to do" : "done";
+}
+
+<h2>
+    @task.Name
+
+    <form asp-action="Done" asp-controller="Tasks" method="post">
+        <input type="hidden" name="idTask" value="@task.IdTask" />
+        <button type="submit" class="btn btn-success">@statusTaskButton</button>
+    </form>
+
+</h2>
+<h4>Status: <font class="text-danger">@status</font></h4>
+<h4>Priority: <font class="text-danger">@priority</font></h4>
+<br />
+@task.Description
+<br />
+<hr />
+@if (myRole == Role.Administrator)
+{
+    <form asp-action="AddUser" asp-controller="Tasks" method="post">
+        <div class="form-row align-items-center">
+            <div>
+                <label class="mr-sm-2" for="inlineFormCustomSelect">Choice developer</label><br />
+                <select class="custom-select mr-sm-2 btn btn-primary" id="inlineFormCustomSelect" name="idUser">
+                    @foreach (var user in usersChoice)
+                    {
+                        <option value="@user.User.IdUser">@user.User.Login</option>
+                    }
+                </select>
+                <input type="hidden" name="idTask" value="@task.IdTask">
+                <input type="hidden" name="idProject" value="@project.IdProject">
+                <button type="submit" class="btn btn-primary">Add</button>
+            </div>
+        </div>
+    </form>
+}
+<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseDevelopers" aria-expanded="false" aria-controls="collapseExample">
+    Developers
+</button>
+<div class="collapse" id="collapseDevelopers">
+    <div class="card card-body">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Login</th>
+                    <th>Role</th>
+                </tr>
+            </thead>
+            <tbody id="Mytable">
+                @foreach (var user in users)
+                {
+                    <tr>
+                        <td>
+                            @user.User.Login
+                        </td>
+                        <td>
+                            @{Role userRole = (Role)user.Role;}
+                            @userRole
+                        </td>
+                        <td align="right">
+                            @if (myRole == Role.Administrator && user.Role != (int)Role.Administrator)
+                            {
+                                <form asp-action="DeleteUser" asp-controller="Tasks" method="post">
+                                    <input type="hidden" value="@user.User.IdUser" name="idUser" />
+                                    <input type="hidden" value="@task.IdTask" name="idTask" />
+                                    <input type="submit" class="btn btn-danger" value="Delete" />
+                                </form>
+
+                            }
+
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+<br />
+<hr />
+<form asp-action="AddComment" asp-controller="Tasks" asp-anti-forgery="true" enctype="multipart/form-data">
+    <div class="validation" asp-validation-summary="ModelOnly"></div>
+    <div>
+        <div>
+            <label asp-for="Description">Remark</label><br />
+            <textarea asp-for="Description" class="form-control"></textarea>
+            <input type="hidden" asp-for="IdTask" value="@task.IdTask" />
+        </div>
+        <hr />
+        <div>
+            <button type="submit" class="btn btn-primary btn-block">Create</button>
+        </div>
+    </div>
+</form>
+
+
+<hr />
+
+@foreach (var comment in comments)
+{
+    <div class="card">
+        @comment.Comment.DateCreate
+        <div class="card-body">
+            <h5 class="card-title">Login: @comment.User.Login</h5>
+            <p class="card-text">@comment.Comment.Description</p>
+        </div>
+    </div>
+    <hr />
+}
+
+
+
+

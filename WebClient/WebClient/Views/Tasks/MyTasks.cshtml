@@ -1,0 +1,70 @@
+﻿
+@{
+    ViewData["Title"] = "MyTasks";
+    var tasks = ViewData["MyTasks"] as IEnumerable<MyTask>;
+}
+
+<h2>MyTasks</h2>
+
+<input class="form-control" type="text" placeholder="Search" id="search-text" onkeyup="tableSearch()">
+<br />
+<br />
+<table class="table" id="myTasks">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Date start</th>
+        </tr>
+    </thead>
+    <tbody id="TableTasks">
+
+        @if (tasks != null)
+        {
+            @foreach (var task in tasks)
+            {
+                <tr>
+                    <td>
+                        @Html.ActionLink(@task.Name, "Task", "Tasks", new { id = @task.IdTask }, null)
+
+                    </td>
+                    <td>
+                        @{Priority priority = (Priority)task.Priority;}
+                        @priority
+                    </td>
+                    <td>
+                        @{Status st = (Status)task.Status;}
+                        @st
+                    </td>
+                    <td>
+                        @task.DateStart
+                    </td>
+                </tr>
+
+            }
+
+        }
+
+    </tbody>
+</table>
+<script>
+    function tableSearch() {
+    var phrase = document.getElementById('search-text');
+    var table = document.getElementById('myTasks');
+    var regPhrase = new RegExp(phrase.value, 'i');
+    var flag = false;
+    for (var i = 1; i < table.rows.length; i++) {
+        flag = false;
+        for (var j = table.rows[i].cells.length - 1; j >= 0; j--) {
+            flag = regPhrase.test(table.rows[i].cells[j].innerHTML);
+            if (flag) break;
+        }
+        if (flag) {
+            table.rows[i].style.display = "";
+        } else {
+            table.rows[i].style.display = "none";
+        }
+    }
+}
+</script>

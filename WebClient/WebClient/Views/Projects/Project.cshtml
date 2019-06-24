@@ -1,0 +1,257 @@
+﻿@using WebClient.Models;
+@model WebClient.Models.MyTask
+@{
+    Project p = ViewData["Project"] as Project;
+    Role myRole = (Role)(ViewData["MyRole"] ?? Role.Developer);
+    var users = ViewData["Users"] as IEnumerable<ExtendedUser>;
+    var tasks = ViewData["Tasks"] as IEnumerable<ExtendedTask>;
+    string status = ((Status)(p.Status ?? 0)).ToString();
+}
+<h2>@p.Name</h2>
+<h4>Status: <font class="text-danger">@status</font></h4>
+<h4>Role: <font class="text-danger">@myRole</font></h4>
+<br />
+@p.Description
+<br />
+<hr />
+<p>
+    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+        Developers
+    </button>
+    @if (myRole == Role.Administrator)
+    {
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#userModal">
+            Add developer
+        </button>
+
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#taskModal">
+            Create new task
+        </button>
+
+        <!-- Modal -->
+        <div class="modal fade" id="userModal" tabindex="-1" role="dialog" aria-labelledby="projectModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="userModalLabel">Developer</h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <h4 class="text-danger">Please fill in all fields!</h4>
+                        <form asp-action="AddUserInProject" asp-controller="Projects" method="post" asp-anti-forgery="true" enctype="multipart/form-data">
+                            <div>
+                                <div>
+                                    <label>Login</label><br />
+                                    <input type="text" name="login" class="btn-block" />
+                                    <input type="hidden" name="idProject" value=@p.IdProject />
+                                </div>
+                                <hr />
+                                <div>
+                                    <button type="submit" class="btn btn-primary btn-block">Accept</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</p>
+<div class="collapse" id="collapseExample">
+    <div class="card card-body">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Login</th>
+                    <th>Role</th>
+                </tr>
+            </thead>
+            <tbody id="Mytable">
+                @foreach (var user in users)
+                {
+                <tr>
+                    <td>
+                        @user.User.Login
+                    </td>
+                    <td>
+                        @{Role userRole = (Role)user.Role;}
+                        @userRole
+                    </td>
+                    <td align="right">
+                        @if (myRole == Role.Administrator && user.Role!=(int)Role.Administrator)
+                        {
+                            <form asp-action="DeleteUser" asp-controller="Projects" method="post">
+                                <input type="hidden" value="@user.User.IdUser" name="idUser" />
+                                <input type="hidden" value="@p.IdProject" name="idProject" />
+                                <input type="submit" class="btn btn-danger" value="Delete" />
+                            </form>
+                        }
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<div class="modal fade" id="taskModal" tabindex="-1" role="dialog" aria-labelledby="taskModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="taskModalLabel">Task</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h4 class="text-danger">Please fill in all fields!</h4>
+                <form asp-action="AddTask" asp-controller="Projects" asp-anti-forgery="true" enctype="multipart/form-data">
+                    <div class="validation" asp-validation-summary="ModelOnly"></div>
+                    <div>
+                        <div>
+                            <label asp-for="Name">Name</label><br />
+                            <input type="text" asp-for="Name" class="btn-block" />
+                            <span asp-validation-for="Name" />
+                        </div>
+                        <div>
+                            <label asp-for="Description">Description</label><br />
+                            <textarea asp-for="Description" class="form-control"></textarea>
+                        </div>
+                        <div class="btn-block">
+                            <label asp-for="Status">Status</label><br />
+                            @Html.DropDownList("Status", Html.GetEnumSelectList(typeof(Status)))
+                        </div>
+                        <div class="btn-block">
+                            <label asp-for="Priority">Priority</label><br />
+                            @Html.DropDownList("Priority", Html.GetEnumSelectList(typeof(Priority)))
+                        </div>
+                        <input type="hidden" name="idProject" value="@p.IdProject" />
+                        <hr />
+                        <div>
+                            <button type="submit" class="btn btn-primary btn-block">Create</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<hr />
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Priority</th>
+            <th>Status</th>
+            <th>Date start</th>
+            <th>Date end</th>
+        </tr>
+    </thead>
+    <tbody id="TableTasks">
+        @if (tasks != null)
+        {
+            @foreach (var task in tasks)
+            {
+                <tr>
+                    <td>
+                        @Html.ActionLink(@task.Task.Name, "Task", "Tasks", new { id = @task.Task.IdTask}, null)
+
+                    </td>
+                    <td>
+                        @{Priority priority = (Priority)task.Task.Priority;}
+                        @priority
+                    </td>
+                    <td>
+                        @{Status st = (Status)task.Task.Status;}
+                        @st
+                    </td>
+                    <td>
+                        @task.Task.DateStart
+                    </td>
+                    <td>
+                        @if (task.Task.Status == (int)Status.Сompleted)
+                        {
+                            @task.Task.DateEnd
+                        }
+                        else
+                        {
+                            <div>&mdash;</div>
+                        }
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-link" data-toggle="modal" data-target="#tasksettingsModal_@task.Task.IdTask">
+                            Settings
+                        </button>
+
+                        <div class="modal fade" id="tasksettingsModal_@task.Task.IdTask" tabindex="-1" role="dialog" aria-labelledby="tasksettingsModalLabel_@task.Task.IdTask" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h4 class="modal-title" id="tasksettingsModalLabel_@task.Task.IdTask">Project</h4>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <h4 class="text-danger">Please fill in all fields!</h4>
+                                        <form asp-action="UpdateTask" asp-controller="Projects" asp-anti-forgery="true" enctype="multipart/form-data">
+                                            <div class="validation" asp-validation-summary="ModelOnly"></div>
+                                            <div>
+                                                <div>
+                                                    <label asp-for="Name">Name</label><br />
+                                                    <input type="text" asp-for="Name" value="@task.Task.Name" class="btn-block" />
+                                                    <span asp-validation-for="Name" />
+                                                </div>
+                                                <div>
+                                                    <input type="hidden" asp-for="DateStart" value="@task.Task.DateStart" />
+                                                    <input type="hidden" asp-for="DateEnd" value="@task.Task.DateEnd" />
+                                                    <input type="hidden" asp-for="IdTask" value="@task.Task.IdTask" />
+                                                  </div>
+                                                <div>
+                                                    <label asp-for="Description">Description</label><br />
+                                                    <textarea class="form-control" name="Description">@task.Task.Description</textarea>
+                                                </div>
+                                                <div class="btn-block">
+                                                    <label asp-for="Status">Status</label><br />
+                                                    @Html.DropDownList("Status", Html.GetEnumSelectList(typeof(Status)))
+                                                </div>
+                                                <div class="btn-block">
+                                                    <label asp-for="Priority">Priority</label><br />
+                                                    @Html.DropDownList("Priority", Html.GetEnumSelectList(typeof(Priority)))
+                                                </div>
+                                                <input type="hidden" name="idProject" value="@p.IdProject" />
+                                                <hr />
+                                                <div>
+                                                    <button type="submit" class="btn btn-primary btn-block">Accept</button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    @if (myRole == Role.Administrator)
+                    {
+                        <td align="right">
+                            <form asp-action="DeleteTask" asp-controller="Projects" method="post">
+                                <input type="hidden" value="@task.Task.IdTask" name="idTask" />
+                                <input type="hidden" value="@p.IdProject" name="idProject" />
+                                <input type="submit" class="btn btn-danger" value="Delete" />
+                            </form>
+                        </td>
+                    }
+
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+
+
